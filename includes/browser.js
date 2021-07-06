@@ -227,7 +227,9 @@ module.exports = {
         /**
          * @const { Object } _jsonResponse
          */
-        _jsonResponse = JSON.parse(document.querySelector(_selector).innerText);
+        _jsonResponse = document.querySelector(_selector)
+          ? JSON.parse(document.querySelector(_selector).innerText)
+          : "";
         resolve(_jsonResponse);
       });
     });
@@ -276,7 +278,7 @@ module.exports = {
           `https://www.daraz.pk/catalog/?page=${_currentPage}&q=${_searchTerm}&sort=pricedesc`
         );
         console.log(
-          `Navigated to Search Result #${_currentPage} :: https://www.daraz.pk/catalog/?page=${_currentPage}&q=${_searchTerm}&sort=pricedesc`
+          `Nav > Search Page #${_currentPage} :: https://www.daraz.pk/catalog/?page=${_currentPage}&q=${_searchTerm}&sort=pricedesc`
         );
         const _extractedData = await this._getProductLinks(_page);
         _extractedData.links = _extractedData.links.filter(
@@ -286,6 +288,7 @@ module.exports = {
         this._createLinksFile(_searchTerm, _links, _outputDirectory);
         _nextPage = _extractedData.next;
         if (_nextPage) {
+          console.log(`Scraped > Search Page :: ${_currentPage}`);
           _currentPage++;
         } else {
           break;
@@ -293,9 +296,14 @@ module.exports = {
       }
       for (const _link of _links) {
         await _page.goto(_link);
-        console.log(`Navigated to Product :: ${_link}`);
+        console.log(`Nav > Product :: ${_link}`);
         const _productData = await this._getProductData(_page);
-        this._createProductFile(_productData, _outputDirectory);
+        if (_productData) {
+          this._createProductFile(_productData, _outputDirectory);
+          console.log(`Scraped > Product :: ${_productData.name}`);
+        } else {
+          console.log(`Skipped > Product :: ${_link}`);
+        }
       }
     }
     _browser.close();
